@@ -1,0 +1,92 @@
+/*
+ * at91sam9x5dm.dtsi - Device Tree file for SAM9x5 display module
+ *
+ *  Copyright (C) 2014 Atmel,
+ *                2014 Free Electrons
+ *
+ *  Author: Boris Brezillon <boris.brezillon@free-electrons.com>
+ *
+ * Licensed under GPLv2 or later.
+ */
+/ {
+	ahb {
+		apb {
+			hlcdc: hlcdc@f8038000 {
+				hlcdc-display-controller {
+					pinctrl-names = "default";
+					pinctrl-0 = <&pinctrl_lcd_base &pinctrl_lcd_rgb565>;
+
+					port@0 {
+						hlcdc_panel_output: endpoint@0 {
+							reg = <0>;
+							remote-endpoint = <&panel_input>;
+						};
+					};
+				};
+			};
+
+			adc0: adc@f804c000 {
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_adc0_ad6>;
+				/*
+				pinctrl-0 = <&pinctrl_adc0_ad0
+					     &pinctrl_adc0_ad1
+					     &pinctrl_adc0_ad2
+					     &pinctrl_adc0_ad3
+					     &pinctrl_adc0_adtrg>;
+				atmel,adc-ts-wires = <4>;
+				atmel,adc-ts-pressure-threshold = <10000>;
+				*/
+			};
+
+			pwm0: pwm@f8034000 {
+				pinctrl-names = "default";
+				pinctrl-0 = <&pinctrl_pwm0_pwm0_0 &pinctrl_pwm0_pwm1_0 &pinctrl_pwm0_pwm2_0 &pinctrl_pwm0_pwm3_0>;
+			};
+		};
+	};
+
+	bl_reg: backlight_regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "backlight-power-supply";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		status = "disabled";
+	};
+
+	panel_reg: panel_regulator {
+		compatible = "regulator-fixed";
+		regulator-name = "panel-power-supply";
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		status = "disabled";
+	};
+
+	backlight: backlight {
+		compatible = "pwm-backlight";
+		pwms = <&hlcdc_pwm 0 100000 0>;
+		brightness-levels = <0 4 8 16 32 64 128 255>;
+		default-brightness-level = <6>;
+		power-supply = <&bl_reg>;
+		status = "disabled";
+	};
+
+	panel: panel {
+		compatible = "az,az-4p3-480272ef-atxl", "simple-panel";
+		backlight = <&backlight>;
+		power-supply = <&panel_reg>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		status = "disabled";
+
+		port@0 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			panel_input: endpoint@0 {
+				reg = <0>;
+				remote-endpoint = <&hlcdc_panel_output>;
+			};
+		};
+	};
+};

@@ -61,8 +61,8 @@
     compatible = "gpio-keys-polled";
     poll-interval = <100>;
     /* autorepeat; */
+    
     /* Keypad button is HOME */
-
     button_0 {
       debounce_interval = <50>;
       label = "button 0";
@@ -71,7 +71,7 @@
       /* gpio-key,wakeup; */
     };
 
-    /* Keypad button is ENTER */
+    /* Keypad button is Reading */
   button_1 {
       debounce_interval = <50>;
       label = "button 1";
@@ -80,8 +80,8 @@
       /* gpio-key,wakeup; */
     };
 
-   /* Currently KEY_Q */
-   /* Keypad button is DIAG */
+   /* Currently KEY_RIGHT */
+   /* Keypad button is KEY_RIGHT */
   button_2 {
       debounce_interval = <50>;
       label = "button 2";
@@ -91,8 +91,8 @@
     };
 
 
-    /* Currently KEY_RIGHT */
-   /* Keypad button is RIGHT ARROW */
+    /* Currently KEY_UP */
+   /* Keypad button is UP ARROW */
    button_3 {
       debounce_interval = <50>;
       label = "button 3";
@@ -103,8 +103,8 @@
 
 
 
-    /* Currently KEY_UP */
-    /* Keypad button is UP ARROW */
+    /* Currently KEY_ENTER */
+    /* Keypad button is ENTER ARROW */
     button_4 {
       debounce_interval = <50>;
       label = "button 4";
@@ -133,8 +133,8 @@
       /* gpio-key,wakeup; */
     };
 
-    /* Currently KEY_O */
-    /* Keypad button MENU */
+    /* Currently KEY_M */
+    /* Keypad button Mute */
 
     button_7 {
       debounce_interval = <50>;
@@ -144,13 +144,14 @@
       /* gpio-key,wakeup; */
     };
 
-  /* Keypad button Back */
+  /* Keypad button Menu */
+    /* actual Key is O */
     button_8 {
       debounce_interval = <50>;
       label = "button 8";
  
       gpios = <&pioC 25 GPIO_ACTIVE_HIGH>;
-      linux,code = <KEY_ESC>;
+      linux,code = <KEY_O>;
       /* gpio-key,wakeup; */
     };
 

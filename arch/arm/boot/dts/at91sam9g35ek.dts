@@ -75,8 +75,8 @@
   button_1 {
       debounce_interval = <50>;
       label = "button 1";
-      gpios = <&pioC 20 GPIO_ACTIVE_HIGH>;
-      linux,code = <KEY_ENTER>;
+      gpios = <&pioC 17 GPIO_ACTIVE_HIGH>;
+      linux,code = <KEY_R>;
       /* gpio-key,wakeup; */
     };
 

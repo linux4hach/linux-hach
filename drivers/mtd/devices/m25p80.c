@@ -72,6 +72,10 @@
 /* Used for Spansion flashes only. */
 #define	OPCODE_BRWR		0x17	/* Bank register write */
 
+/* Used for Micron flashes only. */
+#define	OPCODE_RESET_ENABLE		0x66	/* Reset Enable */
+#define	OPCODE_RESET_MEMORY		0x99	/* Reset Memory */
+
 /* Status Register bits. */
 #define	SR_WIP			1	/* Write in progress */
 #define	SR_WEL			2	/* Write enable latch */
@@ -324,6 +328,35 @@ static int wait_till_ready(struct m25p *flash)
 		return wait_till_sr_ready(flash);
 	}
 
+}
+/*
+ * Reset the device.
+ */
+static int reset_device(struct m25p *flash)
+{	
+
+	/* Wait until finished previous command */
+	if (wait_till_ready(flash))
+		return 1;
+
+	/*
+	// first exit the 4-byte mode 
+	write_enable(flash);
+	flash->command[0] = OPCODE_EX4B;
+	spi_write(flash->spi, flash->command, 1);
+	flash->addr_width = 3;
+	if (wait_till_ready(flash)) {
+		return 1;
+	}
+	*/
+	/* send reset enable command followed by the reset memory command */
+	flash->command[0] = OPCODE_RESET_ENABLE;
+	spi_write(flash->spi, flash->command, 1);
+	cond_resched();
+	flash->command[0] = OPCODE_RESET_MEMORY;
+	spi_write(flash->spi, flash->command, 1);
+	
+	return 0;
 }
 /*
  * Write status Register and configuration register with 2 bytes
@@ -894,6 +927,7 @@ err:	mutex_unlock(&flash->lock);
 	return res;
 }
 
+
 static int m25p80_unlock(struct mtd_info *mtd, loff_t ofs, uint64_t len)
 {
 	struct m25p *flash = mtd_to_m25p(mtd);
@@ -1004,15 +1038,29 @@ err:	mutex_unlock(&flash->lock);
 static int micron_unlock(struct mtd_info *mtd, loff_t ofs, uint64_t len)
 {
 	struct m25p *flash = mtd_to_m25p(mtd);
-	//uint32_t offset = ofs;
+	uint32_t address = ofs;
 	int res = 0;
+	u32 start_sector,unprotected_area;
+	u32 sector_size;
 
+	sector_size = flash->sector_size;
+	start_sector = address / sector_size;
+	//64 bit division
+	do_div(len, sector_size);
+	unprotected_area = len;
+
+	if (start_sector == 0 && unprotected_area == 1) {
+		printk("spi: reset the chip...\n");
+		res = reset_device(flash);
+		return res;
+	}
 	mutex_lock(&flash->lock);
 	/* Wait until finished previous command */
 	if (wait_till_ready(flash)) {
 		res = 1;
 		goto err;
 	}
+
 	//enable the write
 	write_enable(flash);
 	//write 0 to the status register to unlock all sectors
@@ -1020,6 +1068,7 @@ static int micron_unlock(struct mtd_info *mtd, loff_t ofs, uint64_t len)
 		res = 1;
 		goto err;
 	}
+
 err:	mutex_unlock(&flash->lock);
 	return res;
 }
@@ -1553,7 +1602,10 @@ static int m25p_probe(struct spi_device *spi)
 static int m25p_remove(struct spi_device *spi)
 {
 	struct m25p	*flash = spi_get_drvdata(spi);
-
+	if (flash->fsr_wait) {
+		printk("spi: reset the chip...\n");
+		reset_device(flash);
+	}
 	/* Clean up MTD stuff. */
 	return mtd_device_unregister(&flash->mtd);
 }

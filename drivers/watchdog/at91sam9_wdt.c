@@ -34,7 +34,11 @@
 #include <linux/uaccess.h>
 #include <linux/of.h>
 #include <linux/of_irq.h>
-
+#include <linux/delay.h>
+#include <linux/workqueue.h>
+#include <linux/interrupt.h>
+#include <linux/mtd/mtd.h>
+#include <linux/mtd/partitions.h>
 #include "at91sam9_wdt.h"
 
 #define DRV_NAME "AT91SAM9 Watchdog"
@@ -91,7 +95,20 @@ struct at91wdt {
 	bool nowayout;
 	unsigned int irq;
 };
+static struct work_struct reboot_work;
 
+static void wdt_reboot(struct work_struct *work)
+{
+	/* get the bootstrap mtd device */
+	struct mtd_info *mtd = get_mtd_device_nm("bootstrap");
+
+	pr_crit("at91sam9 WDT software reset %s\n", mtd->name);
+	/* reset the serial flash chip by calling the unlock function */
+	mtd_unlock(mtd, 0, mtd->erasesize);
+	emergency_restart();
+	pr_crit("Reboot didn't ?????\n");
+
+}
 /* ......................................................................... */
 
 static irqreturn_t wdt_interrupt(int irq, void *dev_id)
@@ -99,9 +116,7 @@ static irqreturn_t wdt_interrupt(int irq, void *dev_id)
 	struct at91wdt *wdt = (struct at91wdt *)dev_id;
 
 	if (wdt_read(wdt, AT91_WDT_SR)) {
-		pr_crit("at91sam9 WDT software reset\n");
-		emergency_restart();
-		pr_crit("Reboot didn't ?????\n");
+		schedule_work(&reboot_work);
 	}
 
 	return IRQ_HANDLED;
@@ -356,6 +371,7 @@ static int __init at91wdt_probe(struct platform_device *pdev)
 		if (err)
 			return err;
 	}
+	INIT_WORK(&reboot_work, wdt_reboot);
 
 	err = at91_wdt_init(pdev, wdt);
 	if (err)

@@ -1,8 +1,8 @@
 VERSION = 3
 PATCHLEVEL = 15
 SUBLEVEL = 0
-EXTRAVERSION = .06
-NAME = Shuffling Zombie Juror
+EXTRAVERSION = .07
+NAME = Hach Company Modifications 
 
 # *DOCUMENTATION*
 # To see a list of typical targets execute "make help"
@@ -14,6 +14,7 @@ NAME = Shuffling Zombie Juror
 # o  use make's built-in rules and variables
 #    (this increases performance and avoids hard-to-debug behaviour);
 # o  print "Entering directory ...";
+# 3.15.0.07 - Added the /dev/uinput device to hach_at91sam9g35_defconfig
 MAKEFLAGS += -rR --no-print-directory
 
 # Avoid funny character set dependencies

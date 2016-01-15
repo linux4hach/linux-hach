@@ -1467,9 +1467,11 @@ CONFIG_MFD_ATMEL_HLCDC=y
 # CONFIG_REGULATOR is not set
 # CONFIG_MEDIA_SUPPORT is not set
 
+
 #
 # Graphics support
 #
+CONFIG_FB_PRE_INIT_FB=y
 CONFIG_HAVE_FB_ATMEL=y
 
 #
@@ -1495,6 +1497,7 @@ CONFIG_DRM_ATMEL_HLCDC=y
 # CONFIG_DRM_SHMOBILE is not set
 # CONFIG_DRM_TILCDC is not set
 CONFIG_DRM_PANEL=y
+
 
 #
 # Display Panels

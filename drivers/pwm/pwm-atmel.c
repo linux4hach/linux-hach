@@ -108,14 +108,42 @@ static int atmel_pwm_config(struct pwm_chip *chip, struct pwm_device *pwm,
 	u32 val;
 	int ret;
 
-	if (test_bit(PWMF_ENABLED, &pwm->flags) && (period_ns != pwm->period)) {
-		dev_err(chip->dev, "cannot change PWM period while enabled\n");
-		return -EBUSY;
+	clk_rate = clk_get_rate(atmel_pwm->clk);
+
+	if (test_bit(PWMF_ENABLED, &pwm->flags)) {
+		if (duty_ns != pwm->duty_cycle) {
+			dev_err(chip->dev, "cannot change PWM duty while enabled\n");
+			return -EBUSY;
+		}
+		/* PWM period only update */
+		ret = clk_enable(atmel_pwm->clk);
+		if (ret) {
+			dev_err(chip->dev, "failed to enable PWM clock\n");
+			return ret;
+		}
+		/* read PWM CMR */
+		val = atmel_pwm_ch_readl(atmel_pwm, pwm->hwpwm, PWM_CMR);
+		/* use current pre scaler */
+		pres = val & PWM_CMR_CPRE_MSK;
+		div = clk_rate / (1 << pres);
+		div = div * period_ns;
+		/* 1/Hz = 100000000 ns */
+		do_div(div, 1000000000);
+		prd = div;
+		if (prd > PWM_MAX_PRD) {
+			dev_err(chip->dev, "PWM period exceeds the maximum value\n");
+			return -EINVAL;
+		}
+		div *= duty_ns;
+		do_div(div, period_ns);
+		dty = div;
+			
+		atmel_pwm->config(chip, pwm, dty, prd);
+		clk_disable(atmel_pwm->clk);
+		return ret;		
 	}
 
-	clk_rate = clk_get_rate(atmel_pwm->clk);
 	div = clk_rate;
-
 	/* Calculate the period cycles */
 	while (div > PWM_MAX_PRD) {
 		div = clk_rate / (1 << pres);
@@ -134,8 +162,8 @@ static int atmel_pwm_config(struct pwm_chip *chip, struct pwm_device *pwm,
 	prd = div;
 	div *= duty_ns;
 	do_div(div, period_ns);
-	dty = prd - div;
-
+	//dty = prd - div;
+	dty = div;
 	ret = clk_enable(atmel_pwm->clk);
 	if (ret) {
 		dev_err(chip->dev, "failed to enable PWM clock\n");
@@ -161,12 +189,12 @@ static void atmel_pwm_config_v1(struct pwm_chip *chip, struct pwm_device *pwm,
 	if (test_bit(PWMF_ENABLED, &pwm->flags)) {
 		/*
 		 * If the PWM channel is enabled, using the update register,
-		 * it needs to set bit 10 of CMR to 0
+		 * it needs to set bit 10 of CMR to 1 for period update
 		 */
-		atmel_pwm_ch_writel(atmel_pwm, pwm->hwpwm, PWMV1_CUPD, dty);
+		atmel_pwm_ch_writel(atmel_pwm, pwm->hwpwm, PWMV1_CUPD, prd);
 
 		val = atmel_pwm_ch_readl(atmel_pwm, pwm->hwpwm, PWM_CMR);
-		val &= ~PWM_CMR_UPD_CDTY;
+		val |= PWM_CMR_UPD_CDTY;
 		atmel_pwm_ch_writel(atmel_pwm, pwm->hwpwm, PWM_CMR, val);
 	} else {
 		/*

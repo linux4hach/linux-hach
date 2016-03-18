@@ -79,8 +79,8 @@ static struct at91_gpio_chip gpio_chip[] = {
 	AT91_GPIO_CHIP("pioE"),
 };
 
-static int gpio_banks;
-static unsigned long at91_gpio_caps;
+static int gpio_banks = MAX_GPIO_BANKS;
+static unsigned long at91_gpio_caps = 1;
 
 /* All PIO controllers support PIO3 features */
 #define AT91_GPIO_CAP_PIO3	(1 <<  0)
@@ -91,9 +91,16 @@ static unsigned long at91_gpio_caps;
 
 static inline void __iomem *pin_to_controller(unsigned pin)
 {
+	void __iomem *reg;	
 	pin /= MAX_NB_GPIO_PER_BANK;
-	if (likely(pin < gpio_banks))
+	if (likely(pin < gpio_banks)) {
+		reg = gpio_chip[pin].regbase;
+		if (reg == NULL ) {
+			return ioremap((0xfffff400+pin*0x200),512); 
+		}
+			
 		return gpio_chip[pin].regbase;
+	}
 
 	return NULL;
 }

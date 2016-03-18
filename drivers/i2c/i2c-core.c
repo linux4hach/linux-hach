@@ -197,7 +197,10 @@ static int i2c_generic_recovery(struct i2c_adapter *adap)
 	int i = 0, val = 1, ret = 0;
 
 	if (bri->prepare_recovery)
-		bri->prepare_recovery(bri);
+		bri->prepare_recovery(adap);
+
+	bri->set_scl(adap, val);
+	ndelay(RECOVERY_NDELAY);
 
 	/*
 	 * By this time SCL is high, as we need to give 9 falling-rising edges
@@ -222,14 +225,14 @@ static int i2c_generic_recovery(struct i2c_adapter *adap)
 	}
 
 	if (bri->unprepare_recovery)
-		bri->unprepare_recovery(bri);
+		bri->unprepare_recovery(adap);
 
 	return ret;
 }
 
 int i2c_generic_scl_recovery(struct i2c_adapter *adap)
 {
-	adap->bus_recovery_info->set_scl(adap, 1);
+
 	return i2c_generic_recovery(adap);
 }
 

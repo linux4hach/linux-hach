@@ -1554,7 +1554,7 @@ static void atmci_detect_change(unsigned long data)
 	if (test_bit(ATMCI_SHUTDOWN, &slot->flags))
 		return;
 
-	enable_irq(gpio_to_irq(slot->detect_pin));
+	//enable_irq(gpio_to_irq(slot->detect_pin));
 	present = !(gpio_get_value(slot->detect_pin) ^
 		    slot->detect_is_active_high);
 	present_old = test_bit(ATMCI_CARD_PRESENT, &slot->flags);
@@ -1633,6 +1633,7 @@ static void atmci_detect_change(unsigned long data)
 
 		mmc_detect_change(slot->mmc, 0);
 	}
+	enable_irq(gpio_to_irq(slot->detect_pin));
 }
 
 static void atmci_tasklet_func(unsigned long priv)
@@ -2130,7 +2131,7 @@ static irqreturn_t atmci_detect_interrupt(int irq, void *dev_id)
 	 * middle of the timer routine when this interrupt triggers.
 	 */
 	disable_irq_nosync(irq);
-	mod_timer(&slot->detect_timer, jiffies + msecs_to_jiffies(20));
+	mod_timer(&slot->detect_timer, jiffies + msecs_to_jiffies(500));
 
 	return IRQ_HANDLED;
 }

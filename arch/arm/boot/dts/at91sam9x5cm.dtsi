@@ -86,9 +86,8 @@
 
 			rootfs@800000 {
 				label = "rootfs";
-				reg = <0x800000 0x1f800000>;
+				reg = <0x800000 0x6780000>;
 			};
-
 			dtb-backup@6F80000 {
 				label = "dtb-backup";
 				reg = <0x6F80000 0x80000>;

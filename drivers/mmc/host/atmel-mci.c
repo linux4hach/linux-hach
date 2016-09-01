@@ -1220,7 +1220,7 @@ static void atmci_start_request(struct atmel_mci *host,
 	 */
 	atmci_writel(host, ATMCI_IER, iflags);
 
-	mod_timer(&host->timer, jiffies +  msecs_to_jiffies(2000));
+	mod_timer(&host->timer, jiffies +  msecs_to_jiffies(500));
 }
 
 static void atmci_queue_request(struct atmel_mci *host,

@@ -972,6 +972,7 @@ static int m25p80_unlock(struct mtd_info *mtd, loff_t ofs, uint64_t len)
 err:	mutex_unlock(&flash->lock);
 	return res;
 }
+
 static int micron_lock(struct mtd_info *mtd, loff_t ofs, uint64_t len)
 {
 	struct m25p *flash = mtd_to_m25p(mtd);
